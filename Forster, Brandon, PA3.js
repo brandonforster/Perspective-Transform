@@ -14,7 +14,7 @@ function onPress()
 }
 
 function main(){
-	// ... global variables ...
+	// Globals
 	var canvas = null;
 	var gl = null;
 	var messageField = null;
@@ -86,11 +86,9 @@ function main(){
 		var VSHADER_SOURCE =
 		  'attribute vec3 position;\n' +
 		  'attribute vec3 color;\n' +
-		  //'uniform mat4 mvpT;'+
 		  'uniform mat4 modelT, viewT, projT;'+
 		  'varying vec3 fcolor;'+
 		  'void main() {\n' +
-		  //'  gl_Position = mvpT*vec4(position,1.0);\n' +
 		  '  gl_Position = projT*viewT*modelT*vec4(position,1.0);\n' +
 		  '  fcolor = color;'+
 		  '}\n';
@@ -115,7 +113,6 @@ function main(){
 		var mmLoc = gl.getUniformLocation(program,"modelT");
 		var vmLoc = gl.getUniformLocation(program,"viewT");
 		var pmLoc = gl.getUniformLocation(program,"projT");
-		//var mvpLoc = gl.getUniformLocation(program,"mvpT");
 		
 		var drawables=[];
 		var modelTransformations=[];
@@ -131,11 +128,9 @@ function main(){
 					mesh.vertexPositions.length/3, gl.TRIANGLES,
 					mesh.indices
 				);
-				//console.log((model.nodes)?model.nodes[i].modelMatrix:undefined);
 				var m = new Matrix4();
 				if (model.nodes)m.elements=new Float32Array(model.nodes[i].modelMatrix);
 				modelTransformations[nDrawables] = m;
-				//console.log(m.elements);
 				nDrawables++;
 			}
 		}
@@ -145,11 +140,8 @@ function main(){
 			gl.useProgram(program);
 			gl.uniformMatrix4fv(pmLoc, false, pMatrix.elements);
 			gl.uniformMatrix4fv(vmLoc, false, vMatrix.elements);
-			//var vpMatrix = new Matrix4(pMatrix).multiply(vMatrix); // Right multiply
 			for (var i= 0; i<nDrawables; i++){
 				var mMatrix=modelTransformations[i];
-				//var mvpMatrix = new Matrix4(vpMatrix).multiply(mMatrix);
-				//gl.uniformMatrix4fv(mvpLoc, false, mvpMatrix.elements);
 				gl.uniformMatrix4fv(mmLoc, false, mMatrix.elements);
 				drawables[i].draw(a_Locations);
 			}
@@ -162,17 +154,12 @@ function main(){
 			for (var k=0; k<nNodes; k++){
 				var m = new Matrix4();
 				if (model.nodes)m.elements=new Float32Array(model.nodes[k].modelMatrix);
-				//console.log(model.nodes[k].modelMatrix);
 				var nMeshes = (model.nodes)?model.nodes[k].meshIndices.length:model.meshes.length;
 				for (var n = 0; n < nMeshes; n++){
 					var index = (model.nodes)?model.nodes[k].meshIndices[n]:n;
 					var mesh = model.meshes[index];
 					for(var i=0;i<mesh.vertexPositions.length; i+=3){
 						var vertex = m.multiplyVector4(new Vector4([mesh.vertexPositions[i],mesh.vertexPositions[i+1],mesh.vertexPositions[i+2],1])).elements;
-						//if (i==0){
-						//	console.log([mesh.vertexPositions[i],mesh.vertexPositions[i+1],mesh.vertexPositions[i+2]]);
-						//	console.log([vertex[0], vertex[1], vertex[2]]);
-						//}
 						if (firstvertex){
 							xmin = xmax = vertex[0];
 							ymin = ymax = vertex[1];
@@ -193,7 +180,6 @@ function main(){
 			var dim= {};
 			dim.min = [xmin,ymin,zmin];
 			dim.max = [xmax,ymax,zmax];
-			//console.log(dim);
 			return dim;
 		}
 	}
@@ -202,7 +188,6 @@ function main(){
 	{
 		var center = [(d.min[0]+d.max[0])/2,(d.min[1]+d.max[1])/2,(d.min[2]+d.max[2])/2];
 		var diagonal = Math.sqrt(Math.pow((d.max[0]-d.min[0]),2)+Math.pow((d.max[1]-d.min[1]),2)+Math.pow((d.max[2]-d.min[2]),2));
-		//console.log(center+" "+diagonal);
 		
 		name = "auto";
 		at = center;
@@ -234,23 +219,27 @@ function main(){
 	var teapotModel = new RenderableModel(teapotObject);
 	var cubeModel = new RenderableModel(cubeObject);
 	
-	// Create camera with eye point outside a bounding box.
-	// one choice of bounding box is 
-	var camera = new Camera(teapotModel.getBounds(),[0,1,0]);
-	var projMatrix = camera.getProjMatrix();
-	
+		
 	function draw(){
 		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-		var viewMatrix = camera.getRotatedViewMatrix(angle);
 		switch (buttonState)
 		{
 		case 0:
+			var skullCamera = new Camera(skullModel.getBounds(),[0,1,0]);
+			var projMatrix = camera.getProjMatrix();
+			var viewMatrix = camera.getRotatedViewMatrix(angle);
 			skullModel.draw(projMatrix, viewMatrix);
 			break;
 		case 1:
+			var camera = new Camera(teapotModel.getBounds(),[0,1,0]);
+			var projMatrix = camera.getProjMatrix();
+			var viewMatrix = camera.getRotatedViewMatrix(angle);
 			teapotModel.draw(projMatrix, viewMatrix);
 			break;
 		case 2:
+			var camera = new Camera(cubeModel.getBounds(),[-3,7,10]);
+			var projMatrix = camera.getProjMatrix();
+			var viewMatrix = camera.getRotatedViewMatrix(angle);
 			cubeModel.draw(projMatrix, viewMatrix);
 			break;
 		}
