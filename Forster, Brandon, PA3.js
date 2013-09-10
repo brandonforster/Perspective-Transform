@@ -189,13 +189,13 @@ function main(){
 		var center = [(d.min[0]+d.max[0])/2,(d.min[1]+d.max[1])/2,(d.min[2]+d.max[2])/2];
 		var diagonal = Math.sqrt(Math.pow((d.max[0]-d.min[0]),2)+Math.pow((d.max[1]-d.min[1]),2)+Math.pow((d.max[2]-d.min[2]),2));
 		
-		name = "auto";
-		at = center;
-		eye = [center[0], center[1]+diagonal*0.5, center[2]+diagonal*1.5];
-		up = [modelUp[0],modelUp[1],modelUp[2]];
-		near = diagonal*0.1;
-		far = diagonal*3;
-		FOV = 32;
+		var name = "auto";
+		var at = center;
+		var eye = [center[0], center[1]+diagonal*0.5, center[2]+diagonal*1.5];
+		var up = [modelUp[0],modelUp[1],modelUp[2]];
+		var near = diagonal*0.1;
+		var far = diagonal*3;
+		var FOV = 32;
 
 		this.getRotatedCameraPosition= function(angle){
 			var m = new Matrix4().setTranslate(at[0],at[1],at[2]).rotate(angle,up[0],up[1],up[2]).translate(-at[0],-at[1],-at[2]);
@@ -215,33 +215,30 @@ function main(){
 	}
 	
 	var angle=0;
-	var skullModel = new RenderableModel(skullObject);
-	var teapotModel = new RenderableModel(teapotObject);
-	var cubeModel = new RenderableModel(cubeObject);
 		
 	function draw(){
 		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+		
 		switch (buttonState)
 		{
 		case 0:
-			var camera = new Camera(skullModel.getBounds(),[0,1,0]);
-			var projMatrix = camera.getProjMatrix();
-			var viewMatrix = camera.getRotatedViewMatrix(angle);
-			skullModel.draw(projMatrix, viewMatrix);
+			camera 	= skullCamera;
+			model 	= skullModel;
 			break;
 		case 1:
-			var camera = new Camera(teapotModel.getBounds(),[0,1,0]);
-			var projMatrix = camera.getProjMatrix();
-			var viewMatrix = camera.getRotatedViewMatrix(angle);
-			teapotModel.draw(projMatrix, viewMatrix);
+			camera 	= teapotCamera;
+			model 	= teapotModel;
 			break;
 		case 2:
-			var camera = new Camera(cubeModel.getBounds(),[-3,7,10]);
-			var projMatrix = camera.getProjMatrix();
-			var viewMatrix = camera.getRotatedViewMatrix(angle);
-			cubeModel.draw(projMatrix, viewMatrix);
+			camera 	= cubeCamera;
+			model 	= cubeModel;
 			break;
 		}
+		
+		var projMatrix = camera.getProjMatrix();
+		var viewMatrix = camera.getRotatedViewMatrix(angle);
+		
+		model.draw(projMatrix, viewMatrix);
 		
 		angle++; if (angle > 360) angle -= 360;
 		window.requestAnimationFrame(draw);
@@ -249,6 +246,15 @@ function main(){
 
 	gl.clearColor(0,0,0,1);
 	gl.enable(gl.DEPTH_TEST);
+	
+	var skullModel = 	new RenderableModel(skullObject);
+	var skullCamera =	new Camera(skullModel.getBounds(),[0,1,0]);
+	
+	var teapotModel = 	new RenderableModel(teapotObject);
+	var teapotCamera = 	new Camera(teapotModel.getBounds(),[0,1,0]);
+	
+	var cubeModel = 	new RenderableModel(cubeObject);
+	var cubeCamera = 	new Camera(cubeModel.getBounds(),[0,1,0]);
 
 	draw();
 	return 1;
