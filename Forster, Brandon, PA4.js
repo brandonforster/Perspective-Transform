@@ -1,6 +1,6 @@
 // Brandon Forster
-// CAP 4720- Practice Assignment 3
-// 10 September 2013
+// CAP 4720- Practice Assignment 4
+// 1 October 2013
 
 var buttonState = 0;
 
