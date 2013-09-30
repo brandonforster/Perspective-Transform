@@ -115,7 +115,7 @@ function main(){
 		var FSHADER_SOURCE =
 		  'varying lowp vec3 fcolor;'+
 		  'void main() {\n' +
-		  '  gl_FragColor = vec4(fcolor,1.0);\n' +
+		  '  gl_FragColor = vec4(gl_FragCoord.z,gl_FragCoord.z,gl_FragCoord.z,1.0);\n' +
 		  '}\n';
 		var program = createProgram(gl, VSHADER_SOURCE, FSHADER_SOURCE);
 		if (!program) {
@@ -211,6 +211,7 @@ function main(){
 		var at = center;
 		var eye = [center[0], center[1]+diagonal*0.5, center[2]+diagonal*1.5];
 		var up = [modelUp[0],modelUp[1],modelUp[2]];
+		//@TODO is this what I need to change?
 		var near = diagonal*npd;
 		var far = diagonal*fpd;
 		var FOV = fov;
