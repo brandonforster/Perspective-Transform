@@ -2,7 +2,7 @@
 <html lang= "en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Look at the Pretty Colors</title>
+		<title>near is just as far away as far</title>
 		
 		Brandon Forster</br>
 		CAP 4720- Practice Assignment 4</br>
@@ -23,5 +23,11 @@
 		<script src="Forster, Brandon, PA4.js"></script>
 		</br>
 		<input id="toggle" type="button" value="Change Object!" onclick="onPress();" />
+		</br>
+		<input type="range" name="fov" value="32" min="1" max="180" step="1" onchange="updateFOV(this.value)">	FOV
+		</br>
+		<input type="range" name="npd" value=".1" min="0" max="1" step=".05" onchange="updateNPD(this.value)">	Near Plane Distance (n)
+		</br>
+		<input type="range" name="fpd" value="3" min="1" max="4" step=".05" onchange="updateFPD(this.value)">	Far Plane Distance (f)
 	</body>
 </html>

@@ -3,6 +3,9 @@
 // 1 October 2013
 
 var buttonState = 0;
+var fov= 32;
+var npd= .1;
+var fpd= 3;
 
 function onPress()
 {
@@ -11,6 +14,21 @@ function onPress()
 	{
 		buttonState = 0;
 	}
+}
+
+function updateFOV(value)
+{
+	this.fov= value;
+}
+
+function updateNPD(value)
+{
+	this.npd= value;
+}
+
+function updateFPD(value)
+{
+	this.fpd= value;
 }
 
 function main(){
@@ -193,9 +211,9 @@ function main(){
 		var at = center;
 		var eye = [center[0], center[1]+diagonal*0.5, center[2]+diagonal*1.5];
 		var up = [modelUp[0],modelUp[1],modelUp[2]];
-		var near = diagonal*0.1;
-		var far = diagonal*3;
-		var FOV = 32;
+		var near = diagonal*npd;
+		var far = diagonal*fpd;
+		var FOV = fov;
 
 		this.getRotatedCameraPosition= function(angle){
 			var m = new Matrix4().setTranslate(at[0],at[1],at[2]).rotate(angle,up[0],up[1],up[2]).translate(-at[0],-at[1],-at[2]);
@@ -208,6 +226,15 @@ function main(){
 		}
 		this.getRotatedViewMatrix=function(angle){
 			return this.getViewMatrix(this.getRotatedCameraPosition(angle));
+		}
+		this.getNear=function(){
+			return near;
+		}
+		this.getFar=function(){
+			return far;
+		}
+		this.getFOV=function(){
+			return fov;
 		}
 		this.getProjMatrix=function(){
 			return new Matrix4().setPerspective(FOV, gl.canvas.width / gl.canvas.height, near , far);
@@ -235,7 +262,7 @@ function main(){
 			break;
 		}
 		
-		var projMatrix = camera.getProjMatrix();
+		var projMatrix = new Matrix4().setPerspective(camera.getFOV(), gl.canvas.width / gl.canvas.height, camera.getNear() , camera.getFar());
 		var viewMatrix = camera.getRotatedViewMatrix(angle);
 		
 		model.draw(projMatrix, viewMatrix);
