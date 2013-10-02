@@ -34,6 +34,217 @@ function updateFPD(value)
 }
 
 function main(){
+	objectsMain();
+	graphMain();
+}
+
+function graphMain(){
+	var VSHADER_SOURCE =
+	  'attribute vec3 position;\n' +
+	  'attribute vec3 color;\n' +
+	  'uniform mat4 modelT;'+
+	  'varying vec3 fcolor;'+
+	  'void main() {\n' +
+	  '  gl_Position = modelT*vec4(position,1.0);\n' +
+	  '  fcolor = color;'+
+	  '}\n';
+
+	// Fragment shader program
+	var FSHADER_SOURCE =
+	  'varying lowp vec3 fcolor;'+
+	  'void main() {\n' +
+	  '  gl_FragColor = vec4(fcolor,1.0);\n' +
+	  '}\n';
+
+	  // Retrieve the canvas
+	var canvas = document.getElementById('graph');
+
+	// Get the rendering context
+	var gl= getWebGLContext(canvas);
+	if (!gl)
+	{
+		console.log('Failed to initialize WebGL');
+		return;
+	}
+	
+	// 1. Create vertex shader , attach the source and compile
+	var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+	gl.shaderSource(vertexShader, VSHADER_SOURCE);
+	gl.compileShader(vertexShader);
+	
+	// 2. Create fragment shader, attach the source and compile
+	var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+	gl.shaderSource(fragmentShader, FSHADER_SOURCE);
+	gl.compileShader(fragmentShader);
+	
+	// 3. Create shader program, attach the shaders and link
+	var program= gl.createProgram();
+	gl.attachShader(program, vertexShader);
+	gl.attachShader(program, fragmentShader);
+	gl.linkProgram(program);
+	
+	function Drawable(vArrays, nVertices, drawMode)
+	{
+	  // Create a buffer object
+	  var vertexBuffers=[];
+	  var nElements=[];
+	  var nAttributes = vArrays.length;
+	  for (var i=0; i<nAttributes; i++){
+		  if (vArrays[i]){
+			  vertexBuffers[i] = gl.createBuffer();
+			  if (!vertexBuffers[i]) {
+				addMessage('Failed to create the buffer object');
+				return null;
+			  }
+			  // Bind the buffer object to an ARRAY_BUFFER target
+			  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffers[i]);
+			  // Write date into the buffer object
+			  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vArrays[i]), gl.STATIC_DRAW);
+			  nElements[i] = vArrays[i].length/nVertices;
+		  }
+		  else vertexBuffers[i]=null;
+	  }
+	  this.draw = function (attribLocations){
+		for (var i=0; i<nAttributes; i++){
+		  if (vertexBuffers[i]){
+			  // Bind the buffer object to target
+			  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffers[i]);
+			  // Assign the buffer object to a_Position variable
+			  gl.vertexAttribPointer(attribLocations[i], nElements[i], gl.FLOAT, false, 0, 0);
+		  }
+		}
+		gl.drawArrays(drawMode, 0, nVertices);
+	  }
+	}
+
+	gl.enable(gl.DEPTH_TEST);
+	
+	var triangle = new Drawable(
+		[[-0.433,-0.25, 0.433, -0.25, 0, 0.5],[1,0,0, 0,1,0, 0,0,1]],
+		 3, gl.TRIANGLES); 
+	var rectangle = new Drawable(
+		[[-0.5,-0.5, 0.5,-0.5, 0.5,0.5, -0.5,0.5],null], // No color attribute data
+		4, gl.LINE_LOOP);
+	var solidCube = new Drawable(
+		[[// front face
+		  0.5, 0.5, 0.5,   -0.5, 0.5, 0.5, -0.5,-0.5, 0.5, // v0, v1, v2
+		  0.5, 0.5, 0.5,    0.5,-0.5, 0.5, -0.5,-0.5, 0.5, // v0, v3, v2
+		  // right face
+		  0.5, 0.5, 0.5,    0.5,-0.5, 0.5,  0.5,-0.5,-0.5, // v0, v3, v4
+		  0.5, 0.5, 0.5,    0.5, 0.5,-0.5,  0.5,-0.5,-0.5, // v0, v5, v4
+		  // back face
+		  0.5,-0.5,-0.5,    0.5, 0.5,-0.5, -0.5, 0.5,-0.5, // v4, v5, v6
+		  0.5,-0.5,-0.5,   -0.5,-0.5,-0.5, -0.5, 0.5,-0.5, // v4, v7, v6
+		  // left face
+		 -0.5,-0.5,-0.5,   -0.5,-0.5, 0.5, -0.5, 0.5, 0.5, // v7, v2, v1
+		 -0.5, 0.5, 0.5,   -0.5, 0.5,-0.5, -0.5,-0.5,-0.5, // v1, v6, v7
+		  // top face
+		  0.5, 0.5, 0.5,   -0.5, 0.5, 0.5, -0.5, 0.5,-0.5, // v0, v1, v6
+		  0.5, 0.5, 0.5,    0.5, 0.5,-0.5, -0.5, 0.5,-0.5, // v0, v5, v6
+		  // bottom face
+		 -0.5,-0.5, 0.5,    0.5,-0.5, 0.5,  0.5,-0.5,-0.5, // v2, v3, v4
+		 -0.5,-0.5, 0.5,   -0.5,-0.5,-0.5,  0.5,-0.5,-0.5, // v2, v7, v4
+		 ],
+		[// Front face
+		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,		1.0, 0.0, 0.0, 1.0,
+		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,		1.0, 0.0, 0.0, 1.0,
+		  // right face
+          1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,		1.0, 1.0, 0.0, 1.0,
+		  1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,		1.0, 1.0, 0.0, 1.0, 
+		  // back face
+          0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,		0.0, 1.0, 0.0, 1.0,
+		  0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,		0.0, 1.0, 0.0, 1.0,
+		  // left face
+          1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,		1.0, 0.5, 0.5, 1.0, 
+		  1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,		1.0, 0.5, 0.5, 1.0,
+		  // top face
+          1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,		1.0, 0.0, 1.0, 1.0,     
+		  1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,		1.0, 0.0, 1.0, 1.0,    
+		  // bottom face
+          0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		0.0, 0.0, 1.0, 1.0,  
+		  0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		0.0, 0.0, 1.0, 1.0,
+		]],
+		36, gl.TRIANGLES);
+		
+		var wireCube = new Drawable(
+		[[// front face
+		  0.5, 0.5, 0.5,   	-0.5, 0.5, 0.5,		// v0, v1
+		  -0.5, 0.5, 0.5,	-0.5,-0.5, 0.5,		// v1, v2
+		  -0.5,-0.5, 0.5,	0.5,-0.5, 0.5,		// v2, v3
+		  0.5,-0.5, 0.5,	0.5, 0.5, 0.5,		// v3, v0
+		  // right face
+		  0.5, 0.5, 0.5,    0.5, 0.5,-0.5,		// v0, v5
+		  0.5, 0.5,-0.5,	0.5,-0.5,-0.5,		// v5, v4
+		  0.5,-0.5,-0.5,	0.5,-0.5, 0.5,		// v4, v3
+		  //back face
+		  0.5,-0.5,-0.5,	-0.5,-0.5,-0.5,		// v4, v7
+		  -0.5,-0.5,-0.5,	-0.5, 0.5,-0.5,		// v7, v6
+		  -0.5, 0.5,-0.5,	0.5, 0.5,-0.5,		// v6, v5
+		  //left face
+		  -0.5, 0.5,-0.5,	-0.5, 0.5, 0.5,		// v6, v1
+		  -0.5,-0.5, 0.5,	-0.5,-0.5,-0.5,		// v2, v7
+		 ],
+		[// Front face
+		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,
+		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,	
+		  // right face
+          1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,	
+		  1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,	
+		  // back face
+          0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,	
+		  0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,		
+		  // left face
+          1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,	 
+		  1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,		
+		  // top face
+          1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,	     
+		  1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,		 
+		  // bottom face
+          0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		
+		  0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		
+		]],
+		24, gl.LINES);
+		
+	// Get the location/address of the vertex attribute inside the shader program.
+	var a_Position = gl.getAttribLocation(program, 'position');		  
+	gl.enableVertexAttribArray(a_Position); 
+	var a_Color = gl.getAttribLocation(program, 'color');
+	var aLocations = [a_Position, a_Color];
+
+	// Get the location/address of the uniform variable inside the shader program.
+	var mLoc = gl.getUniformLocation(program,"modelT");
+	var angle = 0;
+	function draw()
+	{
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		
+		var m = new Matrix4() // Default matrix is an identity matrix.
+					
+		gl.disableVertexAttribArray(a_Color); // Color attribute location is disabled for array input for next drawing
+		gl.vertexAttrib3f(a_Color,1,1,1); // the shader will get a constant white color for all the vertices now.
+		gl.uniformMatrix4fv(mLoc, false, m.elements);
+		gl.enableVertexAttribArray(a_Color); // Color attribute location is enabled for all subsequent drawing.
+		
+		m.setRotate(angle, 10,10,1);	
+		gl.uniformMatrix4fv(mLoc, false, m.elements);
+		
+			wireCube.draw(aLocations);
+
+		angle++;
+		
+		if (angle > 360) angle -= 360;	
+		window.requestAnimationFrame(draw);
+	}
+
+	gl.clearColor(0,0,0,1);
+	gl.useProgram(program);
+
+	draw();
+	
+}
+
+
+function objectsMain(){
 	// Globals
 	var canvas = null;
 	var gl = null;
