@@ -286,44 +286,6 @@ function main(){
 		
 		angle++; if (angle > 360) angle -= 360;
 		
-		var wireCube = new Drawable(
-		[[// front face
-		  0.5, 0.5, 0.5,   	-0.5, 0.5, 0.5,		// v0, v1
-		  -0.5, 0.5, 0.5,	-0.5,-0.5, 0.5,		// v1, v2
-		  -0.5,-0.5, 0.5,	0.5,-0.5, 0.5,		// v2, v3
-		  0.5,-0.5, 0.5,	0.5, 0.5, 0.5,		// v3, v0
-		  // right face
-		  0.5, 0.5, 0.5,    0.5, 0.5,-0.5,		// v0, v5
-		  0.5, 0.5,-0.5,	0.5,-0.5,-0.5,		// v5, v4
-		  0.5,-0.5,-0.5,	0.5,-0.5, 0.5,		// v4, v3
-		  //back face
-		  0.5,-0.5,-0.5,	-0.5,-0.5,-0.5,		// v4, v7
-		  -0.5,-0.5,-0.5,	-0.5, 0.5,-0.5,		// v7, v6
-		  -0.5, 0.5,-0.5,	0.5, 0.5,-0.5,		// v6, v5
-		  //left face
-		  -0.5, 0.5,-0.5,	-0.5, 0.5, 0.5,		// v6, v1
-		  -0.5,-0.5, 0.5,	-0.5,-0.5,-0.5,		// v2, v7
-		 ],
-		[// Front face
-		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,
-		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,	
-		  // right face
-          1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,	
-		  1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,	
-		  // back face
-          0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,	
-		  0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,		
-		  // left face
-          1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,	 
-		  1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,		
-		  // top face
-          1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,	     
-		  1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,		 
-		  // bottom face
-          0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		
-		  0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		
-		]],
-		24, graphgl.LINES);
 		
 		var pointDelta= ((camera.getFar()-camera.getNear())/100);
 		var points = new Array();
@@ -339,7 +301,7 @@ function main(){
 			depthVector[3]= depthVector[3]/depthVector[3];
 			
 			
-			points[i]= new Drawable([[(i*pointDelta),depthVector[2]],[0,1,0]], 2, gl.LINES);
+			points[i]= new Drawable([[(i*pointDelta),depthVector[2]],[0,1,0]], 2, gl.POINTS);
 		}
 		
 		// Get the location/address of the vertex attribute inside the shader program.
@@ -362,8 +324,6 @@ function main(){
 		
 		m.setRotate(angle, 10,10,1);	
 		graphgl.uniformMatrix4fv(mLoc, false, m.elements);
-		
-		wireCube.draw(aLocations);
 		
 		var j= 0;
 		
