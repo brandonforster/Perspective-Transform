@@ -6,6 +6,7 @@ var buttonState = 0;
 var fov= 32;
 var npd= .1;
 var fpd= 3;
+var projectionMatrix;
 
 function onPress()
 {	
@@ -24,13 +25,16 @@ function updateFOV(value)
 function updateNPD(value)
 {
 	this.npd= value;
-	//camera.setNear(value);
 }
 
 function updateFPD(value)
 {
 	this.fpd= value;
-	//camera.setFar(value);
+}
+
+function setProjectionMatrix(value)
+{
+	this.projectionMatrix= value;
 }
 
 function main(){
@@ -122,88 +126,24 @@ function graphMain(){
 	var triangle = new Drawable(
 		[[-0.433,-0.25, 0.433, -0.25, 0, 0.5],[1,0,0, 0,1,0, 0,0,1]],
 		 3, gl.TRIANGLES); 
-	var rectangle = new Drawable(
-		[[-0.5,-0.5, 0.5,-0.5, 0.5,0.5, -0.5,0.5],null], // No color attribute data
-		4, gl.LINE_LOOP);
-	var solidCube = new Drawable(
-		[[// front face
-		  0.5, 0.5, 0.5,   -0.5, 0.5, 0.5, -0.5,-0.5, 0.5, // v0, v1, v2
-		  0.5, 0.5, 0.5,    0.5,-0.5, 0.5, -0.5,-0.5, 0.5, // v0, v3, v2
-		  // right face
-		  0.5, 0.5, 0.5,    0.5,-0.5, 0.5,  0.5,-0.5,-0.5, // v0, v3, v4
-		  0.5, 0.5, 0.5,    0.5, 0.5,-0.5,  0.5,-0.5,-0.5, // v0, v5, v4
-		  // back face
-		  0.5,-0.5,-0.5,    0.5, 0.5,-0.5, -0.5, 0.5,-0.5, // v4, v5, v6
-		  0.5,-0.5,-0.5,   -0.5,-0.5,-0.5, -0.5, 0.5,-0.5, // v4, v7, v6
-		  // left face
-		 -0.5,-0.5,-0.5,   -0.5,-0.5, 0.5, -0.5, 0.5, 0.5, // v7, v2, v1
-		 -0.5, 0.5, 0.5,   -0.5, 0.5,-0.5, -0.5,-0.5,-0.5, // v1, v6, v7
-		  // top face
-		  0.5, 0.5, 0.5,   -0.5, 0.5, 0.5, -0.5, 0.5,-0.5, // v0, v1, v6
-		  0.5, 0.5, 0.5,    0.5, 0.5,-0.5, -0.5, 0.5,-0.5, // v0, v5, v6
-		  // bottom face
-		 -0.5,-0.5, 0.5,    0.5,-0.5, 0.5,  0.5,-0.5,-0.5, // v2, v3, v4
-		 -0.5,-0.5, 0.5,   -0.5,-0.5,-0.5,  0.5,-0.5,-0.5, // v2, v7, v4
-		 ],
-		[// Front face
-		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,		1.0, 0.0, 0.0, 1.0,
-		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,		1.0, 0.0, 0.0, 1.0,
-		  // right face
-          1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,		1.0, 1.0, 0.0, 1.0,
-		  1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,		1.0, 1.0, 0.0, 1.0, 
-		  // back face
-          0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,		0.0, 1.0, 0.0, 1.0,
-		  0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,		0.0, 1.0, 0.0, 1.0,
-		  // left face
-          1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,		1.0, 0.5, 0.5, 1.0, 
-		  1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,		1.0, 0.5, 0.5, 1.0,
-		  // top face
-          1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,		1.0, 0.0, 1.0, 1.0,     
-		  1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,		1.0, 0.0, 1.0, 1.0,    
-		  // bottom face
-          0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		0.0, 0.0, 1.0, 1.0,  
-		  0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		0.0, 0.0, 1.0, 1.0,
-		]],
-		36, gl.TRIANGLES);
+		 
+	var pointDelta= ((camera.getFar()-camera.getNear())/100);
+	var points = new Array();
+	
+	var i= 0;
+	for (i=0; i<camera.getFar(); i++)
+	{
+		var depthVector= new Vector4(projectionMatrix.multiply(new Vector4(0,0,(i*pointDelta),1)));
 		
-		var wireCube = new Drawable(
-		[[// front face
-		  0.5, 0.5, 0.5,   	-0.5, 0.5, 0.5,		// v0, v1
-		  -0.5, 0.5, 0.5,	-0.5,-0.5, 0.5,		// v1, v2
-		  -0.5,-0.5, 0.5,	0.5,-0.5, 0.5,		// v2, v3
-		  0.5,-0.5, 0.5,	0.5, 0.5, 0.5,		// v3, v0
-		  // right face
-		  0.5, 0.5, 0.5,    0.5, 0.5,-0.5,		// v0, v5
-		  0.5, 0.5,-0.5,	0.5,-0.5,-0.5,		// v5, v4
-		  0.5,-0.5,-0.5,	0.5,-0.5, 0.5,		// v4, v3
-		  //back face
-		  0.5,-0.5,-0.5,	-0.5,-0.5,-0.5,		// v4, v7
-		  -0.5,-0.5,-0.5,	-0.5, 0.5,-0.5,		// v7, v6
-		  -0.5, 0.5,-0.5,	0.5, 0.5,-0.5,		// v6, v5
-		  //left face
-		  -0.5, 0.5,-0.5,	-0.5, 0.5, 0.5,		// v6, v1
-		  -0.5,-0.5, 0.5,	-0.5,-0.5,-0.5,		// v2, v7
-		 ],
-		[// Front face
-		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,
-		  1.0, 0.0, 0.0, 1.0,	1.0, 0.0, 0.0, 1.0,	
-		  // right face
-          1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,	
-		  1.0, 1.0, 0.0, 1.0,	1.0, 1.0, 0.0, 1.0,	
-		  // back face
-          0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,	
-		  0.0, 1.0, 0.0, 1.0,	0.0, 1.0, 0.0, 1.0,		
-		  // left face
-          1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,	 
-		  1.0, 0.5, 0.5, 1.0,	1.0, 0.5, 0.5, 1.0,		
-		  // top face
-          1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,	     
-		  1.0, 0.0, 1.0, 1.0,	1.0, 0.0, 1.0, 1.0,		 
-		  // bottom face
-          0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		
-		  0.0, 0.0, 1.0, 1.0,   0.0, 0.0, 1.0, 1.0,		
-		]],
-		24, gl.LINES);
+		depthVector[0]= depthVector[0]/depthVector[3];
+		depthVector[1]= depthVector[1]/depthVector[3];
+		depthVector[2]= depthVector[2]/depthVector[3];
+		depthVector[3]= depthVector[3]/depthVector[3];
+		
+		
+		points[i]= new Drawable([[(i*pointDelta),depthVector[2]],[0,1,0]], 2, gl.LINES);
+	}
+
 		
 	// Get the location/address of the vertex attribute inside the shader program.
 	var a_Position = gl.getAttribLocation(program, 'position');		  
@@ -213,7 +153,6 @@ function graphMain(){
 
 	// Get the location/address of the uniform variable inside the shader program.
 	var mLoc = gl.getUniformLocation(program,"modelT");
-	var angle = 0;
 	function draw()
 	{
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -225,20 +164,22 @@ function graphMain(){
 		gl.uniformMatrix4fv(mLoc, false, m.elements);
 		gl.enableVertexAttribArray(a_Color); // Color attribute location is enabled for all subsequent drawing.
 		
-		m.setRotate(angle, 10,10,1);	
 		gl.uniformMatrix4fv(mLoc, false, m.elements);
 		
-			wireCube.draw(aLocations);
-
-		angle++;
+		var j= 0;
 		
-		if (angle > 360) angle -= 360;	
+		for (j=0; j< 100; j++)
+		{
+			points[j].draw(aLocations);
+		}
+		
 		window.requestAnimationFrame(draw);
 	}
 
 	gl.clearColor(0,0,0,1);
 	gl.useProgram(program);
-
+	
+	console.log(projectionMatrix.elements);
 	draw();
 	
 }
@@ -488,6 +429,8 @@ function objectsMain(){
 		var projMatrix = new Matrix4().setPerspective(camera.getFOV(), gl.canvas.width / gl.canvas.height, camera.getNear() , camera.getFar());
 		var viewMatrix = camera.getRotatedViewMatrix(angle);
 		
+		setProjectionMatrix(projMatrix);
+		
 		model.draw(projMatrix, viewMatrix);
 		
 		angle++; if (angle > 360) angle -= 360;
@@ -505,7 +448,7 @@ function objectsMain(){
 	
 	var cubeModel = 	new RenderableModel(cubeObject);
 	var cubeCamera = 	new Camera(cubeModel.getBounds(),[0,1,0]);
-
+	
 	draw();
 	return 1;
 }
