@@ -6,6 +6,7 @@ var buttonState = 0;
 var fov= 32;
 var npd= .1;
 var fpd= 3;
+var projectionMatrix;
 
 function onPress()
 {	
@@ -24,13 +25,16 @@ function updateFOV(value)
 function updateNPD(value)
 {
 	this.npd= value;
-	//camera.setNear(value);
 }
 
 function updateFPD(value)
 {
 	this.fpd= value;
-	//camera.setFar(value);
+}
+
+function setProjectionMatrix(value)
+{
+	this.projectionMatrix= value;
 }
 
 function main(){
@@ -213,7 +217,6 @@ function main(){
 		var at = center;
 		var eye = [center[0], center[1]+diagonal*0.5, center[2]+diagonal*1.5];
 		var up = [modelUp[0],modelUp[1],modelUp[2]];
-		//@TODO is this what I need to change?
 		var near = diagonal*npd;
 		var far = diagonal*fpd;
 		var FOV = fov;
@@ -277,6 +280,8 @@ function main(){
 		var projMatrix = new Matrix4().setPerspective(camera.getFOV(), gl.canvas.width / gl.canvas.height, camera.getNear() , camera.getFar());
 		var viewMatrix = camera.getRotatedViewMatrix(angle);
 		
+		setProjectionMatrix(projMatrix);
+		
 		model.draw(projMatrix, viewMatrix);
 		
 		angle++; if (angle > 360) angle -= 360;
@@ -320,6 +325,23 @@ function main(){
 		]],
 		24, graphgl.LINES);
 		
+		var pointDelta= ((camera.getFar()-camera.getNear())/100);
+		var points = new Array();
+		
+		var i= 0;
+		for (i=0; i<camera.getFar(); i++)
+		{
+			var depthVector= new Vector4(projectionMatrix.multiply(new Vector4(0,0,(i*pointDelta),1)));
+			
+			depthVector[0]= depthVector[0]/depthVector[3];
+			depthVector[1]= depthVector[1]/depthVector[3];
+			depthVector[2]= depthVector[2]/depthVector[3];
+			depthVector[3]= depthVector[3]/depthVector[3];
+			
+			
+			points[i]= new Drawable([[(i*pointDelta),depthVector[2]],[0,1,0]], 2, gl.LINES);
+		}
+		
 		// Get the location/address of the vertex attribute inside the shader program.
 		var a_Position = graphgl.getAttribLocation(program, 'position');		  
 		graphgl.enableVertexAttribArray(a_Position); 
@@ -342,6 +364,13 @@ function main(){
 		graphgl.uniformMatrix4fv(mLoc, false, m.elements);
 		
 		wireCube.draw(aLocations);
+		
+		var j= 0;
+		
+		for (j=0; j< 100; j++)
+		{
+			points[j].draw(aLocations);
+		}
 		
 		window.requestAnimationFrame(draw);
 	}
@@ -450,7 +479,7 @@ function main(){
 	
 	var cubeModel = 	new RenderableModel(cubeObject);
 	var cubeCamera = 	new Camera(cubeModel.getBounds(),[0,1,0]);
-
+	
 	draw();
 	return 1;
 }
