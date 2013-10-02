@@ -8,7 +8,7 @@ var npd= .1;
 var fpd= 3;
 
 function onPress()
-{
+{	
 	buttonState++;
 	if (buttonState > 2)
 	{
@@ -24,11 +24,13 @@ function updateFOV(value)
 function updateNPD(value)
 {
 	this.npd= value;
+	//camera.setNear(value);
 }
 
 function updateFPD(value)
 {
 	this.fpd= value;
+	//camera.setFar(value);
 }
 
 function main(){
@@ -231,8 +233,14 @@ function main(){
 		this.getNear=function(){
 			return near;
 		}
+		this.setNear=function(value){
+			near= diagonal*value;
+		}
 		this.getFar=function(){
 			return far;
+		}
+		this.setFar=function(value){
+			far= diagonal*value;
 		}
 		this.getFOV=function(){
 			return fov;
@@ -262,6 +270,9 @@ function main(){
 			model 	= cubeModel;
 			break;
 		}
+		
+		camera.setNear(npd);
+		camera.setFar(fpd);
 		
 		var projMatrix = new Matrix4().setPerspective(camera.getFOV(), gl.canvas.width / gl.canvas.height, camera.getNear() , camera.getFar());
 		var viewMatrix = camera.getRotatedViewMatrix(angle);
