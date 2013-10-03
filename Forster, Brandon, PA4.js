@@ -286,23 +286,35 @@ function main(){
 		
 		angle++; if (angle > 360) angle -= 360;
 		
+		var N= 100;
+		var pointDelta= ((camera.getFar()-camera.getNear())/N);
 		
-		var pointDelta= ((camera.getFar()-camera.getNear())/100);
+		
 		var points = new Array();
+		var colors = new Array();
+		
+		var temp;
 		
 		var i= 0;
-		for (i=0; i<camera.getFar(); i++)
+		for (i=0; i<N; i++)
 		{
-			var depthVector= new Vector4(projectionMatrix.multiply(new Vector4(0,0,(i*pointDelta),1)));
+			multVectZ= (-(camera.getNear()+(i*pointDelta)));
+			var mvArgs= [0,0,multVectZ,1];
+			var multVect= new Vector4(mvArgs);
 			
-			depthVector[0]= depthVector[0]/depthVector[3];
-			depthVector[1]= depthVector[1]/depthVector[3];
-			depthVector[2]= depthVector[2]/depthVector[3];
-			depthVector[3]= depthVector[3]/depthVector[3];
+			var depthVector= projectionMatrix.multiplyVector4(multVect);
+		
+			depthVector.elements[2]= depthVector.elements[2]/depthVector.elements[3];
 			
+			points.push((-1+2*i/N));
+			points.push(depthVector.elements[2]);
 			
-			points[i]= new Drawable([[(i*pointDelta),depthVector[2]],[0,1,0]], 2, gl.POINTS);
+			colors.push(0);
+			colors.push(1);
+			colors.push(0);
 		}
+		
+		var line= new Drawable([points, colors],N, gl.LINE_LOOP); 
 		
 		// Get the location/address of the vertex attribute inside the shader program.
 		var a_Position = graphgl.getAttribLocation(program, 'position');		  
@@ -321,16 +333,11 @@ function main(){
 		graphgl.vertexAttrib3f(a_Color,1,1,1); // the shader will get a constant white color for all the vertices now.
 		graphgl.uniformMatrix4fv(mLoc, false, m.elements);
 		graphgl.enableVertexAttribArray(a_Color); // Color attribute location is enabled for all subsequent drawing.
-		
-		m.setRotate(angle, 10,10,1);	
+			
 		graphgl.uniformMatrix4fv(mLoc, false, m.elements);
 		
-		var j= 0;
+		line.draw(aLocations);
 		
-		for (j=0; j< 100; j++)
-		{
-			points[j].draw(aLocations);
-		}
 		
 		window.requestAnimationFrame(draw);
 	}
