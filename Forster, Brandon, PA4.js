@@ -38,154 +38,6 @@ function setProjectionMatrix(value)
 }
 
 function main(){
-	objectsMain();
-	graphMain();
-}
-
-function graphMain(){
-	var VSHADER_SOURCE =
-	  'attribute vec3 position;\n' +
-	  'attribute vec3 color;\n' +
-	  'uniform mat4 modelT;'+
-	  'varying vec3 fcolor;'+
-	  'void main() {\n' +
-	  '  gl_Position = modelT*vec4(position,1.0);\n' +
-	  '  fcolor = color;'+
-	  '}\n';
-
-	// Fragment shader program
-	var FSHADER_SOURCE =
-	  'varying lowp vec3 fcolor;'+
-	  'void main() {\n' +
-	  '  gl_FragColor = vec4(fcolor,1.0);\n' +
-	  '}\n';
-
-	  // Retrieve the canvas
-	var canvas = document.getElementById('graph');
-
-	// Get the rendering context
-	var gl= getWebGLContext(canvas);
-	if (!gl)
-	{
-		console.log('Failed to initialize WebGL');
-		return;
-	}
-	
-	// 1. Create vertex shader , attach the source and compile
-	var vertexShader = gl.createShader(gl.VERTEX_SHADER);
-	gl.shaderSource(vertexShader, VSHADER_SOURCE);
-	gl.compileShader(vertexShader);
-	
-	// 2. Create fragment shader, attach the source and compile
-	var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-	gl.shaderSource(fragmentShader, FSHADER_SOURCE);
-	gl.compileShader(fragmentShader);
-	
-	// 3. Create shader program, attach the shaders and link
-	var program= gl.createProgram();
-	gl.attachShader(program, vertexShader);
-	gl.attachShader(program, fragmentShader);
-	gl.linkProgram(program);
-	
-	function Drawable(vArrays, nVertices, drawMode)
-	{
-	  // Create a buffer object
-	  var vertexBuffers=[];
-	  var nElements=[];
-	  var nAttributes = vArrays.length;
-	  for (var i=0; i<nAttributes; i++){
-		  if (vArrays[i]){
-			  vertexBuffers[i] = gl.createBuffer();
-			  if (!vertexBuffers[i]) {
-				addMessage('Failed to create the buffer object');
-				return null;
-			  }
-			  // Bind the buffer object to an ARRAY_BUFFER target
-			  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffers[i]);
-			  // Write date into the buffer object
-			  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vArrays[i]), gl.STATIC_DRAW);
-			  nElements[i] = vArrays[i].length/nVertices;
-		  }
-		  else vertexBuffers[i]=null;
-	  }
-	  this.draw = function (attribLocations){
-		for (var i=0; i<nAttributes; i++){
-		  if (vertexBuffers[i]){
-			  // Bind the buffer object to target
-			  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffers[i]);
-			  // Assign the buffer object to a_Position variable
-			  gl.vertexAttribPointer(attribLocations[i], nElements[i], gl.FLOAT, false, 0, 0);
-		  }
-		}
-		gl.drawArrays(drawMode, 0, nVertices);
-	  }
-	}
-
-	gl.enable(gl.DEPTH_TEST);
-	
-	var triangle = new Drawable(
-		[[-0.433,-0.25, 0.433, -0.25, 0, 0.5],[1,0,0, 0,1,0, 0,0,1]],
-		 3, gl.TRIANGLES); 
-		 
-	var pointDelta= ((camera.getFar()-camera.getNear())/100);
-	var points = new Array();
-	
-	var i= 0;
-	for (i=0; i<camera.getFar(); i++)
-	{
-		var depthVector= new Vector4(projectionMatrix.multiply(new Vector4(0,0,(i*pointDelta),1)));
-		
-		depthVector[0]= depthVector[0]/depthVector[3];
-		depthVector[1]= depthVector[1]/depthVector[3];
-		depthVector[2]= depthVector[2]/depthVector[3];
-		depthVector[3]= depthVector[3]/depthVector[3];
-		
-		
-		points[i]= new Drawable([[(i*pointDelta),depthVector[2]],[0,1,0]], 2, gl.LINES);
-	}
-
-		
-	// Get the location/address of the vertex attribute inside the shader program.
-	var a_Position = gl.getAttribLocation(program, 'position');		  
-	gl.enableVertexAttribArray(a_Position); 
-	var a_Color = gl.getAttribLocation(program, 'color');
-	var aLocations = [a_Position, a_Color];
-
-	// Get the location/address of the uniform variable inside the shader program.
-	var mLoc = gl.getUniformLocation(program,"modelT");
-	function draw()
-	{
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-		
-		var m = new Matrix4() // Default matrix is an identity matrix.
-					
-		gl.disableVertexAttribArray(a_Color); // Color attribute location is disabled for array input for next drawing
-		gl.vertexAttrib3f(a_Color,1,1,1); // the shader will get a constant white color for all the vertices now.
-		gl.uniformMatrix4fv(mLoc, false, m.elements);
-		gl.enableVertexAttribArray(a_Color); // Color attribute location is enabled for all subsequent drawing.
-		
-		gl.uniformMatrix4fv(mLoc, false, m.elements);
-		
-		var j= 0;
-		
-		for (j=0; j< 100; j++)
-		{
-			points[j].draw(aLocations);
-		}
-		
-		window.requestAnimationFrame(draw);
-	}
-
-	gl.clearColor(0,0,0,1);
-	gl.useProgram(program);
-	
-	console.log(projectionMatrix.elements);
-	draw();
-	
-}
-
-
-function objectsMain(){
 	// Globals
 	var canvas = null;
 	var gl = null;
@@ -365,7 +217,6 @@ function objectsMain(){
 		var at = center;
 		var eye = [center[0], center[1]+diagonal*0.5, center[2]+diagonal*1.5];
 		var up = [modelUp[0],modelUp[1],modelUp[2]];
-		//@TODO is this what I need to change?
 		var near = diagonal*npd;
 		var far = diagonal*fpd;
 		var FOV = fov;
@@ -434,11 +285,158 @@ function objectsMain(){
 		model.draw(projMatrix, viewMatrix);
 		
 		angle++; if (angle > 360) angle -= 360;
+		
+		var N= 100;
+		var pointDelta= ((camera.getFar()-camera.getNear())/N);
+		
+		
+		var points = new Array();
+		var colors = new Array();
+		
+		var temp;
+		
+		var i= 0;
+		for (i=0; i<N; i++)
+		{
+			multVectZ= (-(camera.getNear()+(i*pointDelta)));
+			var mvArgs= [0,0,multVectZ,1];
+			var multVect= new Vector4(mvArgs);
+			
+			var depthVector= projectionMatrix.multiplyVector4(multVect);
+		
+			depthVector.elements[2]= depthVector.elements[2]/depthVector.elements[3];
+			
+			points.push((-1+2*i/N));
+			points.push(depthVector.elements[2]);
+			
+			colors.push(0);
+			colors.push(1);
+			colors.push(0);
+		}
+		
+		var line= new Drawable([points, colors],N, gl.LINE_LOOP); 
+		
+		// Get the location/address of the vertex attribute inside the shader program.
+		var a_Position = graphgl.getAttribLocation(program, 'position');		  
+		graphgl.enableVertexAttribArray(a_Position); 
+		var a_Color = graphgl.getAttribLocation(program, 'color');
+		var aLocations = [a_Position, a_Color];
+
+		// Get the location/address of the uniform variable inside the shader program.
+		var mLoc = graphgl.getUniformLocation(program,"modelT");
+		
+		graphgl.clear(graphgl.COLOR_BUFFER_BIT | graphgl.DEPTH_BUFFER_BIT);
+		
+		var m = new Matrix4() // Default matrix is an identity matrix.
+					
+		graphgl.disableVertexAttribArray(a_Color); // Color attribute location is disabled for array input for next drawing
+		graphgl.vertexAttrib3f(a_Color,1,1,1); // the shader will get a constant white color for all the vertices now.
+		graphgl.uniformMatrix4fv(mLoc, false, m.elements);
+		graphgl.enableVertexAttribArray(a_Color); // Color attribute location is enabled for all subsequent drawing.
+			
+		graphgl.uniformMatrix4fv(mLoc, false, m.elements);
+		
+		line.draw(aLocations);
+		
+		
 		window.requestAnimationFrame(draw);
 	}
+	
+	var VSHADER_SOURCE =
+	  'attribute vec3 position;\n' +
+	  'attribute vec3 color;\n' +
+	  'uniform mat4 modelT;'+
+	  'varying vec3 fcolor;'+
+	  'void main() {\n' +
+	  '  gl_Position = modelT*vec4(position,1.0);\n' +
+	  '  fcolor = color;'+
+	  '}\n';
 
+	// Fragment shader program
+	var gFSHADER_SOURCE =
+	  'varying lowp vec3 fcolor;'+
+	  'void main() {\n' +
+	  '  gl_FragColor = vec4(fcolor,1.0);\n' +
+	  '}\n';
+
+	  // Retrieve the canvas
+	var graph = document.getElementById('graph');
+
+	// Get the rendering context
+	var graphgl= getWebGLContext(graph);
+	if (!graphgl)
+	{
+		console.log('Failed to initialize WebGL');
+		return;
+	}
+	
+	// 1. Create vertex shader , attach the source and compile
+	var vertexShader = graphgl.createShader(graphgl.VERTEX_SHADER);
+	graphgl.shaderSource(vertexShader, VSHADER_SOURCE);
+	graphgl.compileShader(vertexShader);
+	
+	// 2. Create fragment shader, attach the source and compile
+	var fragmentShader = graphgl.createShader(graphgl.FRAGMENT_SHADER);
+	graphgl.shaderSource(fragmentShader, gFSHADER_SOURCE);
+	graphgl.compileShader(fragmentShader);
+	
+	// 3. Create shader program, attach the shaders and link
+	var program= graphgl.createProgram();
+	graphgl.attachShader(program, vertexShader);
+	graphgl.attachShader(program, fragmentShader);
+	graphgl.linkProgram(program);
+	
+	function Drawable(vArrays, nVertices, drawMode)
+	{
+	  // Create a buffer object
+	  var vertexBuffers=[];
+	  var nElements=[];
+	  var nAttributes = vArrays.length;
+	  for (var i=0; i<nAttributes; i++){
+		  if (vArrays[i]){
+			  vertexBuffers[i] = graphgl.createBuffer();
+			  if (!vertexBuffers[i]) {
+				addMessage('Failed to create the buffer object');
+				return null;
+			  }
+			  // Bind the buffer object to an ARRAY_BUFFER target
+			  graphgl.bindBuffer(graphgl.ARRAY_BUFFER, vertexBuffers[i]);
+			  // Write date into the buffer object
+			  graphgl.bufferData(graphgl.ARRAY_BUFFER, new Float32Array(vArrays[i]), graphgl.STATIC_DRAW);
+			  nElements[i] = vArrays[i].length/nVertices;
+		  }
+		  else vertexBuffers[i]=null;
+	  }
+	  this.draw = function (attribLocations){
+		for (var i=0; i<nAttributes; i++){
+		  if (vertexBuffers[i]){
+			  // Bind the buffer object to target
+			  graphgl.bindBuffer(graphgl.ARRAY_BUFFER, vertexBuffers[i]);
+			  // Assign the buffer object to a_Position variable
+			  graphgl.vertexAttribPointer(attribLocations[i], nElements[i], graphgl.FLOAT, false, 0, 0);
+		  }
+		}
+		graphgl.drawArrays(drawMode, 0, nVertices);
+	  }
+	}
+
+	graphgl.enable(graphgl.DEPTH_TEST);
+	
 	gl.clearColor(0,0,0,1);
 	gl.enable(gl.DEPTH_TEST);
+	
+		// Get the location/address of the vertex attribute inside the shader program.
+	var a_Position = graphgl.getAttribLocation(program, 'position');		  
+	graphgl.enableVertexAttribArray(a_Position); 
+	var a_Color = graphgl.getAttribLocation(program, 'color');
+	var aLocations = [a_Position, a_Color];
+
+	// Get the location/address of the uniform variable inside the shader program.
+	var mLoc = graphgl.getUniformLocation(program,"modelT");
+	var angle = 0;
+
+	graphgl.clearColor(0,0,0,1);
+	graphgl.useProgram(program);
 	
 	var skullModel = 	new RenderableModel(skullObject);
 	var skullCamera =	new Camera(skullModel.getBounds(),[0,1,0]);
